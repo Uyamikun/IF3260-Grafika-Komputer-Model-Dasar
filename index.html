@@ -1,60 +1,73 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>
-            GPU IF
-        </title>
-    </head>
-    <body>
-        <canvas id="canvas" height="600" width="600"></canvas>
-<div id="uiContainer">
-  <div id="ui">
-    <div id="x"></div>
-    <div id="y"></div>
-    <div id="z"></div>
-    <div id="angleX"></div>
-    <div id="angleY"></div>
-    <div id="angleZ"></div>
-    <div id="scaleX"></div>
-    <div id="scaleY"></div>
-    <div id="scaleZ"></div>
-  </div>
-</div>
-<!-- vertex shader -->
-<script  id="vertex-shader-3d" type="x-shader/x-vertex">
-    attribute vec4 a_position;
-    attribute vec4 a_color;
 
-    uniform mat4 u_matrix;
+<script id="vertex-shader" type="x-shader/x-vertex">
 
-    varying vec4 v_color;
+attribute  vec4 vPosition;
+attribute  vec4 vColor;
+varying vec4 fColor;
 
-    void main() {
-    // Multiply the position by the matrix.
-    gl_Position = u_matrix * a_position;
+uniform vec3 theta;
 
-    // Pass the color to the fragment shader.
-    v_color = a_color;
-    }
+void main()
+{
+    // Compute the sines and cosines of theta for each of
+    //   the three axes in one computation.
+    vec3 angles = radians( theta );
+    vec3 c = cos( angles );
+    vec3 s = sin( angles );
+
+    // Remeber: thse matrices are column-major
+    mat4 rx = mat4( 1.0,  0.0,  0.0, 0.0,
+		    0.0,  c.x,  s.x, 0.0,
+		    0.0, -s.x,  c.x, 0.0,
+		    0.0,  0.0,  0.0, 1.0 );
+
+    mat4 ry = mat4( c.y, 0.0, -s.y, 0.0,
+		    0.0, 1.0,  0.0, 0.0,
+		    s.y, 0.0,  c.y, 0.0,
+		    0.0, 0.0,  0.0, 1.0 );
+
+
+    mat4 rz = mat4( c.z, s.z, 0.0, 0.0,
+		    -s.z,  c.z, 0.0, 0.0,
+		    0.0,  0.0, 1.0, 0.0,
+		    0.0,  0.0, 0.0, 1.0 );
+
+    fColor = vColor;
+    gl_Position = rz * ry * rx * vPosition;
+    gl_Position.z = -gl_Position.z;
+}
 </script>
-<!-- fragment shader -->
-<script  id="fragment-shader-3d" type="x-shader/x-fragment">
-    precision mediump float;
 
-    // Passed in from the vertex shader.
-    varying vec4 v_color;
+<script id="fragment-shader" type="x-shader/x-fragment">
 
-    void main() {
-    gl_FragColor = v_color;
-    }
-</script><!--
-for most samples webgl-utils only provides shader compiling/linking and
-canvas resizing because why clutter the examples with code that's the same in every sample.
-See https://webglfundamentals.org/webgl/lessons/webgl-boilerplate.html
-and https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
-for webgl-utils, m3, m4, and webgl-lessons-ui.
--->
-        <script src="webgl-utils.js"></script>
-        <script src="webgl-lessons-ui.js"></script>
-        <script src="script.js"></script>
-    </body>
-</html
+precision mediump float;
+
+varying vec4 fColor;
+
+void
+main()
+{
+    gl_FragColor = fColor;
+}
+</script>
+
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script type="text/javascript" src="initShaders.js"></script>
+<script type="text/javascript" src="MV.js"></script>
+<script type="text/javascript" src="script.js"></script>
+
+<body>
+<canvas id="gl-canvas" width="512"" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+<br/>
+
+<button id= "xButton">Rotate X</button>
+<button id= "yButton">Rotate Y</button>
+<button id= "zButton">Rotate Z</button>
+
+</body>
+</html>
